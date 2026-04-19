@@ -6,6 +6,23 @@ echo "Motorola G57 Power - Bloatware Remover"
 echo "=========================================="
 echo ""
 
+usage() {
+    echo "Usage: $0 [uninstall|install|remove-permissions]"
+    echo ""
+    echo "Commands:"
+    echo "  uninstall          Remove bloatware apps (default)"
+    echo "  install            Reinstall previously removed apps"
+    echo "  remove-permissions Remove privacy-invading permissions from system apps"
+    echo ""
+    exit 1
+}
+
+if [ $# -eq 0 ]; then
+    MODE="uninstall"
+else
+    MODE="$1"
+fi
+
 if ! command -v adb &> /dev/null; then
     echo "Error: ADB not found. Install Android SDK Platform Tools."
     exit 1
@@ -23,8 +40,56 @@ elif [[ "$DEVICE_STATE" == "no device" ]]; then
     exit 1
 fi
 
-echo "Device connected. Starting bloatware removal..."
+echo "Device connected."
 echo ""
+
+PERMISSION_TARGET_APPS=(
+    "com.google.android.as"
+    "com.google.android.youtube"
+    "com.google.android.gms"
+    "com.android.vending"
+    "com.google.android.inputmethod.latin"
+    "com.google.android.tts"
+    "com.google.android.apps.maps"
+    "com.motorols.securityhub"
+    "com.motorola.launcher3"
+)
+
+PERMISSIONS_TO_REMOVE=(
+    "android.permission.ACCESS_COARSE_LOCATION"
+    "android.permission.ACCESS_FINE_LOCATION"
+    "android.permission.ACCESS_WIFI_STATE"
+    "android.permission.ACCESS_BACKGROUND_LOCATION"
+    "android.permission.ACCESS_FINE_LOCATION"
+    "android.permission.ACCESS_BACKGROUND_LOCATION"
+    "android.permission.FINE_LOCATION_SOURCE"
+    "android.permission.ACTIVITY_RECOGNITION_SOURCE"
+    "android.permission.READ_WRITE_HEALTH_DATA"
+    "android.permission.USE_FULL_SCREEN_INTENT"
+    "android.permission.READ_HEART_RATE"
+    "android.permission.CAMERA"
+    "android.permission.RECORD_AUDIO"
+    "android.permission.READ_SMS"
+    "android.permission.RECEIVE_SMS"
+    "android.permission.RECEIVE_MMS"
+    "android.permission.READ_ICCC_SMS"
+    "android.permission.SEND_SMS"
+    "android.permission.READ_PHONE_STATE"
+    "android.permission.READ_PHONE_NUMBERS"
+    "android.permission.READ_CALL_LOG"
+    "android.permission.CALL_PHONE"
+    "android.permission.PROCESS_OUTGOING_CALLS"
+    "android.permission.WRITE_CALL_LOG"
+    "android.permission.READ_CONTACTS"
+    "android.permission.WRITE_CONTACTS"
+    "android.permission.GET_ACCOUNTS"
+    "android.permission.ACTIVITY_RECOGNITION"
+    "android.permission.READ_CLIPBOARD"
+    "android.permission.GET_USAGE_STATS"
+    "android.permission.CHANGE_WIFI_STATE"
+    "android.permission.WRITE_SETTINGS"
+    "android.permission.ACCESS_RESTRICTED_SETTINGS"
+)
 
 MOTOROLA_APPS=(
     "com.motorola.smartfeed"
@@ -151,25 +216,164 @@ uninstall_app() {
     fi
 }
 
-echo "Removing Motorola bloatware..."
-for app in "${MOTOROLA_APPS[@]}"; do
-    uninstall_app "$app"
-done
+install_app() {
+    local pkg="$1"
+    local result
 
-echo ""
-echo "Removing third-party bloatware..."
-for app in "${THIRD_PARTY_APPS[@]}"; do
-    uninstall_app "$app"
-done
+    result=$(adb shell pm install-existing --user 0 "$pkg" 2>&1)
 
-echo ""
-echo "Removing Google bloatware..."
-for app in "${GOOGLE_APPS[@]}"; do
-    uninstall_app "$app"
-done
+    if [[ "$result" == *"Package $pkg does not exist"* ]]; then
+        echo "  [NOT INSTALLED] $pkg (was never removed or not available)"
+    elif [[ "$result" == *"already installed"* ]]; then
+        echo "  [SKIPPED]  $pkg (already installed)"
+    elif [[ "$result" == *"Failure"* ]]; then
+        echo "  [FAILED]   $pkg"
+    else
+        echo "  [INSTALLED] $pkg"
+    fi
+}
+
+remove_app_permissions() {
+    local pkg="$1"
+    local perm="$2"
+    local result=""
+
+    case "$perm" in
+        android.permission.GET_USAGE_STATS)
+            result=$(adb shell cmd appops set "$pkg" GET_USAGE_STATS ignore 2>&1)
+            ;;
+        android.permission.ACCESS_BACKGROUND_LOCATION)
+            result=$(adb shell cmd appops set "$pkg" ACCESS_BACKGROUND_LOCATION ignore 2>&1)
+            ;;
+        android.permission.CHANGE_WIFI_STATE)
+            result=$(adb shell cmd appops set "$pkg" CHANGE_WIFI_STATE ignore 2>&1)
+            ;;
+        android.permission.WRITE_SETTINGS)
+            result=$(adb shell cmd appops set "$pkg" WRITE_SETTINGS ignore 2>&1)
+            ;;
+        android.permission.ACCESS_RESTRICTED_SETTINGS)
+            result=$(adb shell cmd appops set "$pkg" ACCESS_RESTRICTED_SETTINGS ignore 2>&1)
+;;
+        *)
+            result=$(adb shell pm revoke "$pkg" "$perm" 2>&1)
+            ;;
+    esac
+
+    if [[ "$result" == *"No such permission"* ]]; then
+        echo "  [NOT FOUND] $perm for $pkg"
+    elif [[ "$result" == *"Exception"* ]] || [[ "$result" == *"error"* ]]; then
+        echo "  [FAILED]   $perm for $pkg"
+    else
+        echo "  [REVOKED]  $perm from $pkg"
+    fi
+}
+
+case "$MODE" in
+    uninstall)
+        echo "Starting bloatware removal..."
+        echo ""
+        echo "Removing Motorola bloatware..."
+        for app in "${MOTOROLA_APPS[@]}"; do
+            uninstall_app "$app"
+        done
+
+        echo ""
+        echo "Removing third-party bloatware..."
+        for app in "${THIRD_PARTY_APPS[@]}"; do
+            uninstall_app "$app"
+        done
+
+        echo ""
+        echo "Removing Google bloatware..."
+        for app in "${GOOGLE_APPS[@]}"; do
+            uninstall_app "$app"
+        done
+
+        echo ""
+        echo "=========================================="
+        echo "Done! Some apps may require reboot."
+        echo "To verify, run: adb shell pm list packages -d"
+        echo "=========================================="
+        ;;
+
+    install)
+        echo "Starting bloatware reinstallation..."
+        echo ""
+        echo "Reinstalling Motorola apps..."
+        for app in "${MOTOROLA_APPS[@]}"; do
+            install_app "$app"
+        done
+
+        echo ""
+        echo "Reinstalling third-party apps..."
+        for app in "${THIRD_PARTY_APPS[@]}"; do
+            install_app "$app"
+        done
+
+        echo ""
+        echo "Reinstalling Google apps..."
+        for app in "${GOOGLE_APPS[@]}"; do
+            install_app "$app"
+        done
+
+        echo ""
+        echo "=========================================="
+        echo "Done! Reboot may be required."
+        echo "=========================================="
+        ;;
+
+    remove-permissions)
+        echo "Starting permission removal from privacy-invasive apps..."
+        echo ""
+        echo "Note: Some permissions may auto-regrant on system updates or setup."
+        echo ""
+
+        for app in "${PERMISSION_TARGET_APPS[@]}"; do
+            echo "Processing: $app"
+            for perm in "${PERMISSIONS_TO_REMOVE[@]}"; do
+                remove_app_permissions "$app" "$perm"
+            done
+            echo ""
+        done
+
+        echo "=========================================="
+        echo "Done! Reboot recommended."
+        echo "=========================================="
+        ;;
+
+    *)
+        usage
+        ;;
+esac
 
 echo ""
 echo "=========================================="
-echo "Done! Some apps may require reboot."
-echo "To verify, run: adb shell pm list packages -d"
+echo "Privacy Apps Recommendations"
+echo "=========================================="
+echo "Consider installing these privacy-focused alternatives:"
+echo ""
+echo "  Signal          - Encrypted messaging"
+echo "                    https://github.com/signalapp/signal-android"
+echo ""
+echo "  Shizuku         - ADB power user helper"
+echo "                    https://github.com/thedjchi/shizuku"
+echo ""
+echo "  RethinkDNS      - DNS-based ad/trackering blocker"
+echo "                    https://github.com/celzero/rethink-app"
+echo ""
+echo "  Obtanium        - Ungoogled Chromium for Android"
+echo "                    https://github.com/imranr98/obtanium"
+echo ""
+echo "  Lawnchair       - Customizable Pixel launcher"
+echo "                    https://github.com/lawnchairlauncher/lawnchair"
+echo ""
+echo "  Heliboard       - Privacy-focused keyboard"
+echo "                    https://github.com/helium314/heliboard"
+echo ""
+echo "  Edge Gallery    - AI model testing/hosting"
+echo "                    https://github.com/google-ai-edge/gallery"
+echo ""
+echo "  Droidify        - F-Droid client with modern UI"
+echo "                    https://github.com/droid-ify/client"
+echo ""
 echo "=========================================="
