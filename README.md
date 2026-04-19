@@ -1,6 +1,12 @@
-# Motorola G57 Power - Bloatware Removal Script
+# Android Debloat
 
-A shell script to remove bloatware, reinstall removed apps, and revoke privacy-invasive permissions from system apps on Motorola devices (tested on G57 5G).
+A modular shell script to remove bloatware, reinstall removed apps, and revoke privacy-invasive permissions from system apps on Android devices.
+
+## Currently Supported Devices
+
+| Device | Status |
+|--------|--------|
+| Motorola G57 Power | Supported |
 
 ## Requirements
 
@@ -18,7 +24,7 @@ A shell script to remove bloatware, reinstall removed apps, and revoke privacy-i
 ## Usage
 
 ```bash
-./remove-motorola-bloat.sh <command>
+./moto-debloat.sh <command>
 ```
 
 ### Commands
@@ -33,16 +39,26 @@ A shell script to remove bloatware, reinstall removed apps, and revoke privacy-i
 
 ```bash
 # Remove bloatware
-./remove-motorola-bloat.sh uninstall
+./moto-debloat.sh uninstall
 
 # Reinstall removed apps
-./remove-motorola-bloat.sh install
+./moto-debloat.sh install
 
 # Remove permissions from privacy-invasive apps
-./remove-motorola-bloat.sh remove-permissions
+./moto-debloat.sh remove-permissions
 ```
 
-## What Gets Removed (Uninstall)
+## Adding Support for New Devices
+
+This repo is designed to be modular. To add support for a new device:
+
+1. Create a new config file for the device (e.g., `config-samsung-s24.sh`)
+2. Define the app lists in the config
+3. Run with the config: `./android-debloat.sh --config config-samsung-s24.sh uninstall`
+
+See the `configs/` directory for examples.
+
+## What Gets Removed (Motorola G57 Power)
 
 ### Motorola Apps
 - Smart Feed
@@ -71,7 +87,7 @@ A shell script to remove bloatware, reinstall removed apps, and revoke privacy-i
 - Play Store (not removed)
 - Gmail (not removed)
 
-## Permissions Removed (remove-permissions)
+## Permissions Removed
 
 The script revokes these permissions from selected system apps:
 
