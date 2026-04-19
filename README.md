@@ -134,3 +134,4 @@ After cleanup, consider installing these privacy-focused alternatives:
 | Lawnchair | Customizable Pixel launcher | [github.com/lawnchairlauncher/lawnchair](https://github.com/lawnchairlauncher/lawnchair) |
 | Heliboard | Privacy-focused keyboard | [github.com/helium314/heliboard](https://github.com/helium314/heliboard) |
 | Droidify | F-Droid client | [github.com/droid-ify/client](https://github.com/droid-ify/client) |
+| Vanadium | Browser | [github.com/GrapheneOS/Vanadium](https://github.com/GrapheneOS/Vanadium) |
