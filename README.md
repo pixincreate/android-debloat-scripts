@@ -127,10 +127,10 @@ After cleanup, consider installing these privacy-focused alternatives:
 
 | App | Purpose | Link |
 |-----|---------|------|
-| Signal | Encrypted messaging | [signal.org](https://signal.org) |
+| Signal | WhatsApp alternative, encrypted messaging | [signal.org](https://signal.org) |
 | Shizuku | ADB power user helper | [github.com/thedjchi/shizuku](https://github.com/thedjchi/shizuku) |
 | RethinkDNS | DNS ad/tracker blocker | [github.com/celzero/rethink-app](https://github.com/celzero/rethink-app) |
-| Obtanium | Ungoogled Chromium | [github.com/imranr98/obtanium](https://github.com/imranr98/obtanium) |
+| Obtanium | Get Android app updates straight from the source. | [github.com/imranr98/obtanium](https://github.com/imranr98/obtanium) |
 | Lawnchair | Customizable Pixel launcher | [github.com/lawnchairlauncher/lawnchair](https://github.com/lawnchairlauncher/lawnchair) |
 | Heliboard | Privacy-focused keyboard | [github.com/helium314/heliboard](https://github.com/helium314/heliboard) |
 | Droidify | F-Droid client | [github.com/droid-ify/client](https://github.com/droid-ify/client) |
