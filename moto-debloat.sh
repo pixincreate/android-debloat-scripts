@@ -18,6 +18,7 @@ usage() {
 }
 
 if [ $# -eq 0 ]; then
+    echo "No argument passed. Considering the default value, \`uninstall\`."
     MODE="uninstall"
 else
     MODE="$1"
